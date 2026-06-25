@@ -1,0 +1,5 @@
+# Install with: pip install -r requirements.txt
+# Spell checking uses pyspellchecker (NOT the unrelated "spellchecker" package on PyPI).
+markdown>=3.5
+Pillow>=10.0
+pyspellchecker>=0.8
