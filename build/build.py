@@ -25,7 +25,7 @@ BUILD_DIR = Path(__file__).resolve().parent
 ROOT = BUILD_DIR.parent
 POSTS_DIR = BUILD_DIR / "posts"
 IMAGES_DIR = ROOT / "images"
-PAGES_DIR = ROOT / "pages"
+PAGES_DIR = BUILD_DIR / "pages"
 STATIC_DIR = ROOT / "static"
 STATE_FILE = ROOT / ".build-state.json"
 
@@ -63,6 +63,18 @@ class Post:
     date: str
     tags: list[str]
     pinned: int | None
+    body_md: str
+    body_html: str
+    source_path: Path
+    content_hash: str
+
+
+@dataclass
+class Page:
+    slug: str
+    title: str
+    menu_title: str | None
+    description: str | None
     body_md: str
     body_html: str
     source_path: Path
@@ -158,6 +170,71 @@ def transform_text(text: str, context: str) -> str:
         updated = new_text
 
     return updated
+
+
+def parse_page(path: Path) -> Page:
+    slug = path.name
+    if not SLUG_RE.fullmatch(slug):
+        raise ValueError(f"Invalid page slug '{slug}' (use lowercase letters, digits, hyphens)")
+
+    raw = read_text(path)
+    lines = raw.splitlines()
+    header: dict[str, str] = {}
+    separator_index = None
+
+    for index, line in enumerate(lines):
+        if SEPARATOR_RE.match(line):
+            separator_index = index
+            break
+        if ":" in line:
+            key, value = line.split(":", 1)
+            header[re.sub(r"\s+", "_", key.strip().lower())] = value.strip()
+
+    if separator_index is None:
+        raise ValueError(f"Page '{slug}' is missing a header separator (five or more hyphens)")
+
+    title = header.get("title")
+    if not title:
+        raise ValueError(f"Page '{slug}' is missing a title")
+
+    body_md = "\n".join(lines[separator_index + 1 :]).strip("\n")
+    body_md = transform_text(body_md, f"page '{slug}' body")
+
+    body_html = markdown.markdown(
+        body_md,
+        extensions=["extra", "smarty"],
+        output_format="html5",
+    )
+    body_html = enhance_prose_images(body_html)
+
+    for image_name in extract_markdown_images(body_md):
+        ensure_image_source(image_name)
+
+    return Page(
+        slug=slug,
+        title=title,
+        menu_title=header.get("menu_title") or header.get("menu-title"),
+        description=header.get("description"),
+        body_md=body_md,
+        body_html=body_html,
+        source_path=path,
+        content_hash=content_hash(raw),
+    )
+
+
+def load_pages() -> list[Page]:
+    pages: list[Page] = []
+    if not PAGES_DIR.exists():
+        return pages
+
+    for path in sorted(PAGES_DIR.iterdir()):
+        if not path.is_file() or path.name.startswith("."):
+            continue
+        if not SLUG_RE.fullmatch(path.name):
+            log.debug("Skipping non-page file %s", path.name)
+            continue
+        pages.append(parse_page(path))
+    return pages
 
 
 def parse_post(path: Path) -> Post:
@@ -319,6 +396,11 @@ def build_post_images(post: Post) -> None:
             deploy_image_variants(image_name)
 
 
+def build_page_images(page: Page) -> None:
+    for image_name in extract_markdown_images(page.body_md):
+        deploy_image_variants(image_name)
+
+
 def site_href(path: str) -> str:
     if not path.startswith("/"):
         path = "/" + path
@@ -352,13 +434,16 @@ def sort_for_index(posts: Iterable[Post]) -> list[Post]:
     return sorted(posts, key=lambda post: post.date, reverse=True)
 
 
-def nav_items(tags: list[str], current: str | None) -> str:
+def nav_items(tags: list[str], current: str | None, pages: Iterable[Page] | None = None) -> str:
     items = [("Home", site_href("/"), "home")]
     for tag in tags:
         label = format_tag_label(tag)
         href = site_href(f"/tags/{quote(tag)}")
         items.append((label, href, f"tag:{tag}"))
-    items.append(("About", site_href("/about"), "about"))
+    for page in pages or []:
+        label = page.menu_title or page.slug
+        href = site_href(f"/{page.slug}")
+        items.append((label, href, f"page:{page.slug}"))
 
     parts: list[str] = []
     for label, href, key in items:
@@ -377,6 +462,7 @@ def page_shell(
     tags: list[str],
     current_nav: str | None,
     canonical_path: str,
+    pages: Iterable[Page] | None = None,
 ) -> str:
     css_href = site_href("/css/style.css")
     js_href = site_href("/js/site.js")
@@ -407,7 +493,7 @@ def page_shell(
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
       <nav class="site-nav" id="site-nav" aria-label="Primary">
         <ul class="site-nav__list">
-          {nav_items(tags, current_nav)}
+          {nav_items(tags, current_nav, pages)}
         </ul>
       </nav>
     </div>
@@ -421,8 +507,15 @@ def page_shell(
         <span class="site-footer__name">{escape(AUTHOR_NAME)}</span>
         <a href="mailto:{escape(AUTHOR_EMAIL)}">{escape(AUTHOR_EMAIL)}</a>
       </div>
-      <div class="site-footer__links">
-        <a href="{escape(INSTAGRAM_URL)}" rel="me noopener noreferrer" target="_blank">Instagram</a>
+      <div>
+        <a href="{escape(INSTAGRAM_URL)}" target="_blank" rel="noopener noreferrer" class="instagram-link">
+        <svg xmlns="http://w3.org" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+        </svg>
+        @thosguest
+        </a>
         <a href="{escape(ETSY_URL)}" rel="noopener noreferrer" target="_blank">Etsy</a>
       </div>
     </div>
@@ -447,7 +540,13 @@ def thumbnail_grid(posts: Iterable[Post]) -> str:
     return "    <div class=\"thumb-grid\">\n" + "\n".join(cards) + "\n    </div>"
 
 
-def build_index_page(posts: list[Post], tags: list[str], *, home: bool) -> str:
+def build_index_page(
+    posts: list[Post],
+    tags: list[str],
+    *,
+    home: bool,
+    pages: list[Page] | None = None,
+) -> str:
     ordered = sort_for_home(posts) if home else sort_for_index(posts)
     title = SITE_NAME if home else "Archive"
     description = "Selected artwork by Thomas Guest." if home else "Artwork archive by Thomas Guest."
@@ -460,10 +559,11 @@ def build_index_page(posts: list[Post], tags: list[str], *, home: bool) -> str:
         tags=tags,
         current_nav="home" if home else None,
         canonical_path="/",
+        pages=pages or [],
     )
 
 
-def build_tag_page(tag: str, posts: list[Post], tags: list[str]) -> str:
+def build_tag_page(tag: str, posts: list[Post], tags: list[str], pages: list[Page] | None = None) -> str:
     matching = sort_for_index(post for post in posts if tag in post.tags)
     label = format_tag_label(tag)
     body = f'    <h1 class="page-title">#{escape(tag)}</h1>\n{thumbnail_grid(matching)}'
@@ -474,10 +574,11 @@ def build_tag_page(tag: str, posts: list[Post], tags: list[str]) -> str:
         tags=tags,
         current_nav=f"tag:{tag}",
         canonical_path=f"tags/{quote(tag)}",
+        pages=pages or [],
     )
 
 
-def build_post_page(post: Post, tags: list[str]) -> str:
+def build_post_page(post: Post, tags: list[str], pages: list[Page] | None = None) -> str:
     image = site_href(f"/images/{post.slug}.jpg")
     image_mobile = site_href(f"/images/{post.slug}-mobile.jpg")
     tag_links = "\n          ".join(
@@ -516,22 +617,25 @@ def build_post_page(post: Post, tags: list[str]) -> str:
         tags=tags,
         current_nav=None,
         canonical_path=f"posts/{post.slug}",
+        pages=pages or [],
     )
 
 
-def build_about_page(tags: list[str]) -> str:
-    source = PAGES_DIR / "about.html"
-    if not source.exists():
-        raise FileNotFoundError(f"About page source not found: {source}")
-    content = read_text(source).strip()
-    body = f'    <div class="about-content prose">\n      {content}\n    </div>'
+def build_page_page(page: Page, tags: list[str], pages: list[Page]) -> str:
+    body = f"""    <article class=\"page\">
+      <h1 class=\"page-title\">{escape(page.title)}</h1>
+      <div class=\"page-content prose\">
+        {page.body_html}
+      </div>
+    </article>"""
     return page_shell(
-        title=f"About · {SITE_NAME}",
-        description="About Thomas Guest, artist.",
+        title=f"{page.title} · {SITE_NAME}",
+        description=page.description or f"{page.title} by Thomas Guest.",
         body=body,
         tags=tags,
-        current_nav="about",
-        canonical_path="about",
+        current_nav=f"page:{page.slug}",
+        canonical_path=page.slug,
+        pages=pages,
     )
 
 
@@ -608,6 +712,7 @@ def clean_stale_pages(active_slugs: set[str], active_tags: set[str]) -> None:
 def main() -> None:
     posts = load_posts()
     tags = collect_tags(posts)
+    pages = load_pages()
 
     update_spell_check_state(posts)
     build_avatar()
@@ -615,21 +720,26 @@ def main() -> None:
     for post in posts:
         build_post_images(post)
 
-    write_text(ROOT / "index.html", build_index_page(posts, tags, home=True))
-    write_text(ROOT / "about.html", build_about_page(tags))
+    for page in pages:
+        build_page_images(page)
+
+    write_text(ROOT / "index.html", build_index_page(posts, tags, home=True, pages=pages))
     write_text(ROOT / "feed.rss", build_rss(posts))
 
     active_slugs = {post.slug for post in posts}
     active_tags = set(tags)
     clean_stale_pages(active_slugs, active_tags)
 
+    for page in pages:
+        write_text(ROOT / f"{page.slug}.html", build_page_page(page, tags, pages))
+
     for post in posts:
-        write_text(ROOT / "posts" / (post.slug + ".html"), build_post_page(post, tags))
+        write_text(ROOT / "posts" / f"{post.slug}.html", build_post_page(post, tags, pages=pages))
 
     for tag in tags:
-        write_text(ROOT / "tags" / (tag + ".html"), build_tag_page(tag, posts, tags))
+        write_text(ROOT / "tags" / f"{tag}.html", build_tag_page(tag, posts, tags, pages=pages))
 
-    log.info("Built %d post(s), %d tag page(s)", len(posts), len(tags))
+    log.info("Built %d post(s), %d tag page(s), %d content page(s)", len(posts), len(tags), len(pages))
 
 
 if __name__ == "__main__":

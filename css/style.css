@@ -280,7 +280,7 @@ a:hover {
   border-color: var(--accent);
 }
 
-.artwork__body {
+.artwork__body, .page-content {
   grid-column: 1 / -1;
   max-width: 42rem;
   padding-top: 0.5rem;
@@ -368,6 +368,25 @@ a:hover {
   text-decoration: underline;
 }
 
+.instagram-link {
+  color: #333333; /* Icon line color */
+  text-decoration: none;
+  display: inline-block;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover effects */
+.instagram-link:hover {
+  color: #E1306C; /* Instagram brand pink */
+  transform: scale(1.1); /* Subtle grow effect */
+}
+
+/* Control icon size via SVG parent */
+.instagram-link svg {
+  width: 32px;  /* Change width here */
+  height: 32px; /* Change height here */
+}
+
 /* Mobile */
 
 @media (max-width: 768px) {
@@ -436,7 +455,7 @@ a:hover {
     padding-top: 0;
   }
 
-  .artwork__body {
+  .artwork__body, .page-content {
     max-width: none;
   }
 
