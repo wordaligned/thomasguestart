@@ -5,7 +5,7 @@
 <link>https://thomasguest.art</link>
 <description>Selected artwork by Thomas Guest.</description>
 <language>en-gb</language>
-<lastBuildDate>Sat, 27 Jun 2026 18:29:15 +0000</lastBuildDate>
+<lastBuildDate>Sat, 27 Jun 2026 19:31:11 +0000</lastBuildDate>
 <item>
 <title>Archeopteryx Tile</title>
 <link>https://thomasguest.art/posts/archeopteryx-tile</link>
@@ -47,6 +47,19 @@
 <category>linocut</category>
 </item>
 <item>
+<title>Crab Tetrapak</title>
+<link>https://thomasguest.art/posts/crab-tetrapak</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/crab-tetrapak</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/crab-tetrapak.jpg" alt="Crab Tetrapak"></p><p>My first tetrapak print, done at a workshop in Penarth run by Sarah Hannis.</p>
+<p>It’s based on sketches I made of an edible crab which I bought at Swansea market.</p>
+<p><picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/crab-tetrapak-1-mobile.jpg"><img alt="crab tetrapak" src="https://thomasguest.art/images/crab-tetrapak-1.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/crab-tetrapak-2-mobile.jpg"><img alt="crab tetrapak" src="https://thomasguest.art/images/crab-tetrapak-2.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/crab-tetrapak-3-mobile.jpg"><img alt="crab tetrapak" src="https://thomasguest.art/images/crab-tetrapak-3.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/crab-tetrapak-4-mobile.jpg"><img alt="crab tetrapak" src="https://thomasguest.art/images/crab-tetrapak-4.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/crab-tetrapak-5-mobile.jpg"><img alt="crab tetrapak" src="https://thomasguest.art/images/crab-tetrapak-5.jpg"></picture></p>]]></description>
+<category>tetrapak</category>
+</item>
+<item>
 <title>Eel Tile</title>
 <link>https://thomasguest.art/posts/eel-tile</link>
 <guid isPermaLink="true">https://thomasguest.art/posts/eel-tile</guid>
@@ -66,7 +79,11 @@
 <title>Taffy Tile</title>
 <link>https://thomasguest.art/posts/taffy-tile</link>
 <guid isPermaLink="true">https://thomasguest.art/posts/taffy-tile</guid>
-<description><![CDATA[<p><img src="https://thomasguest.art/images/taffy-tile.jpg" alt="Taffy Tile"></p><p>Taffy is a springer spaniel who loves going on a walk but also takes her rest and relaxation seriously.</p>]]></description>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/taffy-tile.jpg" alt="Taffy Tile"></p><p>Taffy is a springer spaniel who loves going on a walk but also takes her rest and relaxation seriously.</p>
+<p>This tile is based on sketches I made of Taffy when looked after her for a few days.</p>
+<p><picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/taffy-tile-1-mobile.jpg"><img alt="taffy tile" src="https://thomasguest.art/images/taffy-tile-1.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/taffy-tile-2-mobile.jpg"><img alt="taffy tile" src="https://thomasguest.art/images/taffy-tile-2.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/taffy-tile-3-mobile.jpg"><img alt="taffy tile" src="https://thomasguest.art/images/taffy-tile-3.jpg"></picture></p>]]></description>
 <category>ceramic</category>
 </item>
 <item>

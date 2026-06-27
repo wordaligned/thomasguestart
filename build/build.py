@@ -638,7 +638,12 @@ def build_medium_page(medium: str, posts: list[Post], tags: list[str], pages: li
     )
 
 
-def build_post_page(post: Post, tags: list[str], pages: list[Page] | None = None) -> str:
+def build_post_page(
+    post: Post,
+    tags: list[str],
+    pages: list[Page] | None = None,
+    posts: list[Post] | None = None,
+) -> str:
     image = site_href(f"/images/{post.slug}.jpg")
     image_mobile = site_href(f"/images/{post.slug}-mobile.jpg")
     tag_links = "\n          ".join(
@@ -678,7 +683,7 @@ def build_post_page(post: Post, tags: list[str], pages: list[Page] | None = None
         current_nav=None,
         canonical_path=f"posts/{post.slug}",
         pages=pages or [],
-        posts=None,
+        posts=posts or [],
     )
 
 
@@ -807,7 +812,7 @@ def main() -> None:
         write_text(ROOT / f"{page.slug}.html", build_page_page(page, tags, pages))
 
     for post in posts:
-        write_text(ROOT / "posts" / f"{post.slug}.html", build_post_page(post, tags, pages=pages))
+        write_text(ROOT / "posts" / f"{post.slug}.html", build_post_page(post, tags, pages=pages, posts=posts))
 
     for tag in tags:
         write_text(ROOT / "tags" / f"{tag}.html", build_tag_page(tag, posts, tags, pages=pages))

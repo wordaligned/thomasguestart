@@ -124,6 +124,31 @@ class BuildPagesTests(unittest.TestCase):
         self.assertIn('/tags/ceramic', html)
         self.assertIn('aria-current="page"', html)
 
+    def test_post_detail_navbar_matches_index_navbar(self) -> None:
+        post = build_script.Post(
+            slug="example",
+            title="Example",
+            medium="Print",
+            size="10x10",
+            date="2026",
+            tags=["print"],
+            pinned=None,
+            body_md="",
+            body_html="",
+            source_path=ROOT / "build" / "posts" / "example",
+            content_hash="abc",
+        )
+
+        html = build_script.build_post_page(
+            post,
+            [],
+            pages=[],
+            posts=[post],
+        )
+
+        self.assertIn('/media/print', html)
+        self.assertIn('Print', html)
+
     def test_page_images_are_processed_like_post_images(self) -> None:
         page = build_script.Page(
             slug="about",
