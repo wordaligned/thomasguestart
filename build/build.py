@@ -417,6 +417,10 @@ def format_tag_label(tag: str) -> str:
     return tag.replace("-", " ")
 
 
+def slugify(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+
+
 def collect_tags(posts: Iterable[Post]) -> list[str]:
     tags = {tag for post in posts for tag in post.tags}
     return sorted(tags, key=str.lower)
@@ -434,12 +438,23 @@ def sort_for_index(posts: Iterable[Post]) -> list[Post]:
     return sorted(posts, key=lambda post: post.date, reverse=True)
 
 
-def nav_items(tags: list[str], current: str | None, pages: Iterable[Page] | None = None) -> str:
+def nav_items(
+    tags: list[str],
+    current: str | None,
+    pages: Iterable[Page] | None = None,
+    posts: Iterable[Post] | None = None,
+) -> str:
     items = [("Home", site_href("/"), "home")]
-    for tag in tags:
-        label = format_tag_label(tag)
-        href = site_href(f"/tags/{quote(tag)}")
-        items.append((label, href, f"tag:{tag}"))
+
+    seen_mediums: set[str] = set()
+    for post in posts or []:
+        medium_key = slugify(post.medium)
+        if medium_key in seen_mediums:
+            continue
+        seen_mediums.add(medium_key)
+        href = site_href(f"/media/{quote(medium_key)}")
+        items.append((post.medium, href, f"medium:{medium_key}"))
+
     for page in pages or []:
         label = page.menu_title or page.slug
         href = site_href(f"/{page.slug}")
@@ -463,6 +478,7 @@ def page_shell(
     current_nav: str | None,
     canonical_path: str,
     pages: Iterable[Page] | None = None,
+    posts: Iterable[Post] | None = None,
 ) -> str:
     css_href = site_href("/css/style.css")
     js_href = site_href("/js/site.js")
@@ -493,7 +509,7 @@ def page_shell(
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
       <nav class="site-nav" id="site-nav" aria-label="Primary">
         <ul class="site-nav__list">
-          {nav_items(tags, current_nav, pages)}
+          {nav_items(tags, current_nav, pages, posts)}
         </ul>
       </nav>
     </div>
@@ -540,6 +556,35 @@ def thumbnail_grid(posts: Iterable[Post]) -> str:
     return "    <div class=\"thumb-grid\">\n" + "\n".join(cards) + "\n    </div>"
 
 
+def build_index_switcher(posts: Iterable[Post], collections: Iterable[str], *, current_key: str | None) -> str:
+    items: list[tuple[str, str, str]] = []
+    seen: set[str] = set()
+
+    for collection in collections:
+        key = f"tag:{collection}"
+        href = site_href(f"/tags/{quote(collection)}")
+        items.append((collection.lower(), href, key))
+
+    for post in posts:
+        medium_key = slugify(post.medium)
+        if medium_key in seen:
+            continue
+        seen.add(medium_key)
+        items.append((post.medium.lower(), site_href(f"/media/{quote(medium_key)}"), f"medium:{medium_key}"))
+
+    parts: list[str] = []
+    for label, href, key in items:
+        current_attr = ' aria-current="page"' if key == current_key else ""
+        parts.append(
+            f'<a class="index-switcher__button" href="{href}"{current_attr}>{escape(label)}</a>'
+        )
+
+    if not parts:
+        return ""
+
+    return '    <div class="index-switcher">\n      ' + "\n      ".join(parts) + "\n    </div>"
+
+
 def build_index_page(
     posts: list[Post],
     tags: list[str],
@@ -551,7 +596,7 @@ def build_index_page(
     title = SITE_NAME if home else "Archive"
     description = "Selected artwork by Thomas Guest." if home else "Artwork archive by Thomas Guest."
     heading = "" if home else '<h1 class="page-title">All work</h1>\n'
-    body = f"{heading}{thumbnail_grid(ordered)}"
+    body = f"{heading}{build_index_switcher(posts, tags, current_key=None if home else None)}{thumbnail_grid(ordered)}"
     return page_shell(
         title=title,
         description=description,
@@ -560,13 +605,14 @@ def build_index_page(
         current_nav="home" if home else None,
         canonical_path="/",
         pages=pages or [],
+        posts=posts,
     )
 
 
 def build_tag_page(tag: str, posts: list[Post], tags: list[str], pages: list[Page] | None = None) -> str:
     matching = sort_for_index(post for post in posts if tag in post.tags)
     label = format_tag_label(tag)
-    body = f'    <h1 class="page-title">#{escape(tag)}</h1>\n{thumbnail_grid(matching)}'
+    body = f'    <h1 class="page-title">#{escape(tag)}</h1>\n{build_index_switcher(posts, [tag], current_key=f"tag:{tag}")}\n{thumbnail_grid(matching)}'
     return page_shell(
         title=f"{label} · {SITE_NAME}",
         description=f"Artwork tagged “{label}” by Thomas Guest.",
@@ -575,6 +621,23 @@ def build_tag_page(tag: str, posts: list[Post], tags: list[str], pages: list[Pag
         current_nav=f"tag:{tag}",
         canonical_path=f"tags/{quote(tag)}",
         pages=pages or [],
+        posts=posts,
+    )
+
+
+def build_medium_page(medium: str, posts: list[Post], tags: list[str], pages: list[Page] | None = None) -> str:
+    matching = sort_for_index(post for post in posts if post.medium == medium)
+    slug = slugify(medium)
+    body = f'    <h1 class="page-title">{escape(medium)}</h1>\n{build_index_switcher(posts, [], current_key=f"medium:{slug}")}\n{thumbnail_grid(matching)}'
+    return page_shell(
+        title=f"{medium} · {SITE_NAME}",
+        description=f"Artwork in {medium} by Thomas Guest.",
+        body=body,
+        tags=tags,
+        current_nav=f"medium:{slug}",
+        canonical_path=f"media/{quote(slug)}",
+        pages=pages or [],
+        posts=posts,
     )
 
 
@@ -618,6 +681,7 @@ def build_post_page(post: Post, tags: list[str], pages: list[Page] | None = None
         current_nav=None,
         canonical_path=f"posts/{post.slug}",
         pages=pages or [],
+        posts=None,
     )
 
 
@@ -636,6 +700,7 @@ def build_page_page(page: Page, tags: list[str], pages: list[Page]) -> str:
         current_nav=f"page:{page.slug}",
         canonical_path=page.slug,
         pages=pages,
+        posts=None,
     )
 
 
@@ -682,7 +747,7 @@ def build_rss(posts: list[Post]) -> str:
     return "\n".join(lines)
 
 
-def clean_stale_pages(active_slugs: set[str], active_tags: set[str]) -> None:
+def clean_stale_pages(active_slugs: set[str], active_tags: set[str], active_media: set[str]) -> None:
     stale_flat = ROOT / "about.html"
     if stale_flat.is_file():
         stale_flat.unlink()
@@ -708,6 +773,16 @@ def clean_stale_pages(active_slugs: set[str], active_tags: set[str]) -> None:
                 shutil.rmtree(path)
                 log.info("Removed stale tag directory %s", path)
 
+    media_dir = ROOT / "media"
+    if media_dir.exists():
+        for path in media_dir.iterdir():
+            if path.is_file() and path.suffix == ".html":
+                path.unlink()
+                log.info("Removed stale page %s", path)
+            elif path.is_dir() and path.name not in active_media:
+                shutil.rmtree(path)
+                log.info("Removed stale medium directory %s", path)
+
 
 def main() -> None:
     posts = load_posts()
@@ -728,7 +803,8 @@ def main() -> None:
 
     active_slugs = {post.slug for post in posts}
     active_tags = set(tags)
-    clean_stale_pages(active_slugs, active_tags)
+    active_media = {slugify(post.medium) for post in posts}
+    clean_stale_pages(active_slugs, active_tags, active_media)
 
     for page in pages:
         write_text(ROOT / f"{page.slug}.html", build_page_page(page, tags, pages))
@@ -739,7 +815,10 @@ def main() -> None:
     for tag in tags:
         write_text(ROOT / "tags" / f"{tag}.html", build_tag_page(tag, posts, tags, pages=pages))
 
-    log.info("Built %d post(s), %d tag page(s), %d content page(s)", len(posts), len(tags), len(pages))
+    for medium in sorted({post.medium for post in posts}):
+        write_text(ROOT / "media" / f"{slugify(medium)}.html", build_medium_page(medium, posts, tags, pages=pages))
+
+    log.info("Built %d post(s), %d tag page(s), %d medium page(s), %d content page(s)", len(posts), len(tags), len({post.medium for post in posts}), len(pages))
 
 
 if __name__ == "__main__":

@@ -5,7 +5,14 @@
 <link>https://thomasguest.art</link>
 <description>Selected artwork by Thomas Guest.</description>
 <language>en-gb</language>
-<lastBuildDate>Fri, 26 Jun 2026 16:49:58 +0000</lastBuildDate>
+<lastBuildDate>Sat, 27 Jun 2026 06:59:00 +0000</lastBuildDate>
+<item>
+<title>Archeopteryx Tile</title>
+<link>https://thomasguest.art/posts/archeopteryx-tile</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/archeopteryx-tile</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/archeopteryx-tile.jpg" alt="Archeopteryx Tile"></p><p>I loved visiting the Natural History Museum as a child. The excitement of entering that main hall, where the diplodocus skeleton filled the space. And there was a replica of this fossil, perhaps the most famous of them all.</p>]]></description>
+<category>ceramic</category>
+</item>
 <item>
 <title>Swimming Crab and Seaweed Mandala</title>
 <link>https://thomasguest.art/posts/crab-and-seaweed-mandala</link>
@@ -19,7 +26,21 @@
 <p><picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/crab-and-seaweed-2-mobile.jpg"><img alt="cutting the block" src="https://thomasguest.art/images/crab-and-seaweed-2.jpg"></picture>
 <picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/crab-and-seaweed-5-mobile.jpg"><img alt="registration jig" src="https://thomasguest.art/images/crab-and-seaweed-5.jpg"></picture>
 <picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/crab-and-seaweed-6-mobile.jpg"><img alt="inking up" src="https://thomasguest.art/images/crab-and-seaweed-6.jpg"></picture></p>]]></description>
-<category>print</category>
+<category>linocut</category>
+</item>
+<item>
+<title>Eel Tile</title>
+<link>https://thomasguest.art/posts/eel-tile</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/eel-tile</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/eel-tile.jpg" alt="Eel Tile"></p><p>This is inspired by a young conger eel my brother found when we were rockpooling at Oxwich on a very low tide.</p>]]></description>
+<category>ceramic</category>
+</item>
+<item>
+<title>Taffy Tile</title>
+<link>https://thomasguest.art/posts/taffy-tile</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/taffy-tile</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/taffy-tile.jpg" alt="Taffy Tile"></p><p>Taffy is a springer spaniel who loves going on a walk but also takes her rest and relaxation seriously.</p>]]></description>
+<category>ceramic</category>
 </item>
 <item>
 <title>Toad and Dandelion Mandala</title>
@@ -29,7 +50,14 @@
 <p>The design has a rotational symmetry of 6. 6 is a perfect number, being the sum of its proper divisors 1, 2 and 3. Each finished print will have 1, 2, 3 or 6 seeds applied using a hand-made stamp</p>
 <p>I cut the block from Japanese vinyl using Flexcut tools. The paper is Japanese washi and I use Cranfield Caligo inks.
 The process is documented in <a href="https://www.instagram.com/p/DZiUU8GDM5D">my instagram post</a>.</p>]]></description>
-<category>print</category>
+<category>linocut</category>
+</item>
+<item>
+<title>Toad Tile</title>
+<link>https://thomasguest.art/posts/toad-tile</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/toad-tile</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/toad-tile.jpg" alt="Toad Tile"></p><p>Toads bring luck and I am always delighted to find one in the garden. When we lived in Reynoldston there was one which made a home in the coal shed, digging itself down into the dusty floor. And back in Bristol a toad patrolled the elephants ears by the garden wall.. </p>]]></description>
+<category>ceramic</category>
 </item>
 </channel>
 </rss>
