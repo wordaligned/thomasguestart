@@ -556,25 +556,21 @@ def thumbnail_grid(posts: Iterable[Post]) -> str:
     return "    <div class=\"thumb-grid\">\n" + "\n".join(cards) + "\n    </div>"
 
 
-def build_index_switcher(posts: Iterable[Post], collections: Iterable[str], *, current_key: str | None) -> str:
+def build_index_switcher(posts: Iterable[Post], *, current_tag: str | None) -> str:
     items: list[tuple[str, str, str]] = []
-    seen: set[str] = set()
-
-    for collection in collections:
-        key = f"tag:{collection}"
-        href = site_href(f"/tags/{quote(collection)}")
-        items.append((collection.lower(), href, key))
-
+    seen_tags: set[str] = set()
     for post in posts:
-        medium_key = slugify(post.medium)
-        if medium_key in seen:
-            continue
-        seen.add(medium_key)
-        items.append((post.medium.lower(), site_href(f"/media/{quote(medium_key)}"), f"medium:{medium_key}"))
+        for tag in post.tags:
+            if tag in seen_tags:
+                continue
+            seen_tags.add(tag)
+            href = site_href(f"/tags/{quote(tag)}")
+            key = f"tag:{tag}"
+            items.append((tag.lower(), href, key))
 
     parts: list[str] = []
-    for label, href, key in items:
-        current_attr = ' aria-current="page"' if key == current_key else ""
+    for label, href, key in sorted(items, key=lambda item: item[0]):
+        current_attr = ' aria-current="page"' if key == current_tag else ""
         parts.append(
             f'<a class="index-switcher__button" href="{href}"{current_attr}>{escape(label)}</a>'
         )
@@ -596,7 +592,8 @@ def build_index_page(
     title = SITE_NAME if home else "Archive"
     description = "Selected artwork by Thomas Guest." if home else "Artwork archive by Thomas Guest."
     heading = "" if home else '<h1 class="page-title">All work</h1>\n'
-    body = f"{heading}{build_index_switcher(posts, tags, current_key=None if home else None)}{thumbnail_grid(ordered)}"
+    switcher = "" if home else build_index_switcher(ordered, current_tag=None)
+    body = f"{heading}{switcher}{thumbnail_grid(ordered)}"
     return page_shell(
         title=title,
         description=description,
@@ -612,7 +609,7 @@ def build_index_page(
 def build_tag_page(tag: str, posts: list[Post], tags: list[str], pages: list[Page] | None = None) -> str:
     matching = sort_for_index(post for post in posts if tag in post.tags)
     label = format_tag_label(tag)
-    body = f'    <h1 class="page-title">#{escape(tag)}</h1>\n{build_index_switcher(posts, [tag], current_key=f"tag:{tag}")}\n{thumbnail_grid(matching)}'
+    body = f'    <h1 class="page-title">#{escape(tag)}</h1>\n{build_index_switcher(matching, current_tag=f"tag:{tag}")}\n{thumbnail_grid(matching)}'
     return page_shell(
         title=f"{label} · {SITE_NAME}",
         description=f"Artwork tagged “{label}” by Thomas Guest.",
@@ -628,7 +625,7 @@ def build_tag_page(tag: str, posts: list[Post], tags: list[str], pages: list[Pag
 def build_medium_page(medium: str, posts: list[Post], tags: list[str], pages: list[Page] | None = None) -> str:
     matching = sort_for_index(post for post in posts if post.medium == medium)
     slug = slugify(medium)
-    body = f'    <h1 class="page-title">{escape(medium)}</h1>\n{build_index_switcher(posts, [], current_key=f"medium:{slug}")}\n{thumbnail_grid(matching)}'
+    body = f'    <h1 class="page-title">{escape(medium)}</h1>\n{build_index_switcher(matching, current_tag=None)}\n{thumbnail_grid(matching)}'
     return page_shell(
         title=f"{medium} · {SITE_NAME}",
         description=f"Artwork in {medium} by Thomas Guest.",

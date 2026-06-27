@@ -117,12 +117,11 @@ class BuildPagesTests(unittest.TestCase):
                     content_hash="abc",
                 ),
             ],
-            ["print", "ceramic"],
-            current_key="tag:print",
+            current_tag="tag:print",
         )
 
         self.assertIn('/tags/print', html)
-        self.assertIn('/media/ceramic', html)
+        self.assertIn('/tags/ceramic', html)
         self.assertIn('aria-current="page"', html)
 
     def test_page_images_are_processed_like_post_images(self) -> None:
