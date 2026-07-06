@@ -5,7 +5,7 @@
 <link>https://thomasguest.art</link>
 <description>Selected artwork by Thomas Guest.</description>
 <language>en-gb</language>
-<lastBuildDate>Sat, 27 Jun 2026 19:31:11 +0000</lastBuildDate>
+<lastBuildDate>Mon, 06 Jul 2026 17:32:42 +0000</lastBuildDate>
 <item>
 <title>Archeopteryx Tile</title>
 <link>https://thomasguest.art/posts/archeopteryx-tile</link>
@@ -67,6 +67,20 @@
 <category>ceramic</category>
 </item>
 <item>
+<title>Gwen Seated</title>
+<link>https://thomasguest.art/posts/gwen-seated</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/gwen-seated</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/gwen-seated.jpg" alt="Gwen Seated"></p><p>Always a privilege to draw Gwen.</p>]]></description>
+<category>seated pose</category>
+</item>
+<item>
+<title>John Twice</title>
+<link>https://thomasguest.art/posts/john-twice</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/john-twice</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/john-twice.jpg" alt="John Twice"></p><p>Always a pleasure to draw John. Such a presence. These are short poses from an Elysium life drawing session.</p>]]></description>
+<category>standing pose</category>
+</item>
+<item>
 <title>Seaweed Cyanotype</title>
 <link>https://thomasguest.art/posts/seaweed-cyanotype</link>
 <guid isPermaLink="true">https://thomasguest.art/posts/seaweed-cyanotype</guid>
@@ -103,6 +117,55 @@ The process is documented in <a href="https://www.instagram.com/p/DZiUU8GDM5D">m
 <description><![CDATA[<p><img src="https://thomasguest.art/images/toad-tile.jpg" alt="Toad Tile"></p><p>Toads bring luck and I am always delighted to find one in the garden. When we lived in Reynoldston there was one which made a home in the coal shed, digging itself down into the dusty floor. And back in Bristol a toad patrolled the elephants ears by the garden wall.</p>
 <p>You can see me making this one <a href="https://www.instagram.com/reel/DVWNSE4jCCy/">in my instagram reel</a>.</p>]]></description>
 <category>ceramic</category>
+</item>
+<item>
+<title>Alan</title>
+<link>https://thomasguest.art/posts/alan</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/alan</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/alan.jpg" alt="Alan"></p>]]></description>
+<category>standing pose</category>
+</item>
+<item>
+<title>Ana Standing</title>
+<link>https://thomasguest.art/posts/ana-standing</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/ana-standing</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/ana-standing.jpg" alt="Ana Standing"></p>]]></description>
+<category>standing pose</category>
+</item>
+<item>
+<title>Carys Standing</title>
+<link>https://thomasguest.art/posts/carys-standing</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/carys-standing</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/carys-standing.jpg" alt="Carys Standing"></p><p>One of the amazing models at the Elysium life drawing sessions.</p>]]></description>
+<category>standing pose</category>
+</item>
+<item>
+<title>Gwynfor Seated</title>
+<link>https://thomasguest.art/posts/gwynfor</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/gwynfor</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/gwynfor.jpg" alt="Gwynfor Seated"></p><p>This one is from a session at the Swansea Print Workshop.</p>]]></description>
+<category>seated pose</category>
+</item>
+<item>
+<title>Lloyd and Leo</title>
+<link>https://thomasguest.art/posts/lloyd-and-leo</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/lloyd-and-leo</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/lloyd-and-leo.jpg" alt="Lloyd and Leo"></p><p>Queer Shapes modeling collective sometimes work in pairs. These are quick poses at the start of an Elysium life drawing session: too quick to get both figures down. But Leo is there, a fading yellow shape between the standing Lloyds</p>]]></description>
+<category>standing pose</category>
+</item>
+<item>
+<title>Tonya Seated</title>
+<link>https://thomasguest.art/posts/tonya-seated</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/tonya-seated</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/tonya-seated.jpg" alt="Tonya Seated"></p>]]></description>
+<category>seated pose</category>
+</item>
+<item>
+<title>Tonya Standing</title>
+<link>https://thomasguest.art/posts/tonya-standing</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/tonya-standing</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/tonya-standing.jpg" alt="Tonya Standing"></p>]]></description>
+<category>standing pose</category>
 </item>
 </channel>
 </rss>
