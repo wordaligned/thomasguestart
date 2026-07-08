@@ -5,7 +5,7 @@
 <link>https://thomasguest.art</link>
 <description>Selected artwork by Thomas Guest.</description>
 <language>en-gb</language>
-<lastBuildDate>Tue, 07 Jul 2026 06:38:00 +0000</lastBuildDate>
+<lastBuildDate>Wed, 08 Jul 2026 07:09:07 +0000</lastBuildDate>
 <item>
 <title>Archeopteryx Tile</title>
 <link>https://thomasguest.art/posts/archeopteryx-tile</link>
@@ -88,6 +88,16 @@
 <guid isPermaLink="true">https://thomasguest.art/posts/john-twice</guid>
 <description><![CDATA[<p><img src="https://thomasguest.art/images/john-twice.jpg" alt="John Twice"></p><p>Always a pleasure to draw John. Such a presence. These are short poses from an Elysium life drawing session.</p>]]></description>
 <category>standing pose</category>
+</item>
+<item>
+<title>King Vulture Tile</title>
+<link>https://thomasguest.art/posts/king-vulture-tile</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/king-vulture-tile</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/king-vulture-tile.jpg" alt="King Vulture Tile"></p><p>This is based on a sketch I made of the King Vulture specimen in the Bristol Museum.
+I carved it using my printmaking tools.</p>
+<p><picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/king-vulture-tile-1-mobile.jpg"><img alt="king vulture tile" src="https://thomasguest.art/images/king-vulture-tile-1.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/king-vulture-tile-2-mobile.jpg"><img alt="king vulture tile" src="https://thomasguest.art/images/king-vulture-tile-2.jpg"></picture></p>]]></description>
+<category>inlay decoration</category>
 </item>
 <item>
 <title>Seaweed Cyanotype</title>
