@@ -3,3 +3,4 @@ build/venv/
 build/notes.txt
 *~
 __pycache__/
+build/video/

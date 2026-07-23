@@ -43,6 +43,7 @@ EM_DASH_RE = re.compile(r"(?<![-])--(?![-])")
 WORD_RE = re.compile(r"[A-Za-z']+")
 INLINE_IMAGE_RE = re.compile(r"!\[[^\]]*\]\(/images/([^)]+)\)")
 PROSE_IMG_RE = re.compile(r'<img([^>]*?\s)src="/images/([^"]+)"([^>]*)>', re.IGNORECASE)
+VIDEO_MACRO_RE = re.compile(r"\[\[VIDEO\]\]")
 
 THUMB_MAX = 420
 DETAIL_MAX = 1400
@@ -153,6 +154,27 @@ def enhance_prose_images(body_html: str) -> str:
         )
 
     return PROSE_IMG_RE.sub(replace, body_html)
+
+
+def embed_video_macros(body_html: str, slug: str) -> str:
+    if not VIDEO_MACRO_RE.search(body_html):
+        return body_html
+
+    video_path = ROOT / "videos" / f"{slug}.mp4"
+    if not video_path.exists():
+        log.warning(
+            "Post '%s' uses [[VIDEO]] but missing %s",
+            slug,
+            video_path.relative_to(ROOT),
+        )
+
+    video_player = (
+        f'<video controls preload="metadata" class="post-video">'
+        f'<source src="/videos/{slug}.mp4" type="video/mp4">'
+        f'Your browser does not support HTML5 video.'
+        f'</video>'
+    )
+    return VIDEO_MACRO_RE.sub(video_player, body_html)
 
 
 def transform_text(text: str, context: str) -> str:
@@ -292,6 +314,7 @@ def parse_post(path: Path) -> Post:
         output_format="html5",
     )
     body_html = enhance_prose_images(body_html)
+    body_html = embed_video_macros(body_html, slug)
 
     for image_name in extract_markdown_images(body_md):
         ensure_image_source(image_name)
