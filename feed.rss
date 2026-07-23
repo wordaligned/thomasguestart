@@ -5,7 +5,7 @@
 <link>https://thomasguest.art</link>
 <description>Selected artwork by Thomas Guest.</description>
 <language>en-gb</language>
-<lastBuildDate>Thu, 23 Jul 2026 09:13:43 +0000</lastBuildDate>
+<lastBuildDate>Thu, 23 Jul 2026 09:38:46 +0000</lastBuildDate>
 <item>
 <title>Archeopteryx Tile</title>
 <link>https://thomasguest.art/posts/archeopteryx-tile</link>
@@ -87,6 +87,18 @@ I used the vintage <a href="https://swanseaprintworkshop.org.uk/what-we-do/relie
 <guid isPermaLink="true">https://thomasguest.art/posts/eel-tile</guid>
 <description><![CDATA[<p><img src="https://thomasguest.art/images/eel-tile.jpg" alt="Eel Tile"></p><p>This is inspired by a young conger eel my brother found when we were rockpooling at Oxwich on a very low tide.</p>]]></description>
 <category>ceramic</category>
+</item>
+<item>
+<title>Elephant Woodcut</title>
+<link>https://thomasguest.art/posts/elephant-woodcut</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/elephant-woodcut</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/elephant-woodcut.jpg" alt="Elephant Woodcut"></p><p>This was carved from a piece of plywood using Flexcut and Pfeil tools.
+I used the vintage <a href="https://swanseaprintworkshop.org.uk/what-we-do/relief-press/">Columbian press</a> at the Swansea Print workshop. What a privilege to use a machine with such history, and still in perfect working order. I also had some good results printing by hand on Wenzhou paper.</p>
+<p>I’ve printed it on kitakata and Wenzhou paper. I am drawn to the delicate but strong texture of the Wenzhou paper. It’s translucent, as you can see in the video.</p>
+<p><picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/elephant-woodcut-1-mobile.jpg"><img alt="elephant" src="https://thomasguest.art/images/elephant-woodcut-1.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/elephant-woodcut-2-mobile.jpg"><img alt="elephant" src="https://thomasguest.art/images/elephant-woodcut-2.jpg"></picture></p>
+<p><video controls preload="metadata" class="post-video"><source src="/videos/elephant-woodcut.mp4" type="video/mp4">Your browser does not support HTML5 video.</video></p>]]></description>
+<category>relief print</category>
 </item>
 <item>
 <title>Gwen Seated</title>
