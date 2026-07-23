@@ -526,6 +526,7 @@ def page_shell(
   <link rel="alternate" type="application/rss+xml" title="{escape(SITE_NAME)} feed" href="{escape(site_href('/feed.rss'))}">
   <link rel="stylesheet" href="{css_href}">
   <script src="{js_href}" defer></script>
+  <script data-goatcounter="https://thomasguest.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
   <header class="site-header">
