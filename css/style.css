@@ -44,6 +44,17 @@ img {
   height: auto;
 }
 
+/* Make video and embedded media responsive so they don't overflow mobile screens */
+video,
+.post-video,
+iframe,
+embed,
+object {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 a {
   color: var(--accent);
   text-decoration-thickness: 1px;
