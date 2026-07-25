@@ -449,6 +449,63 @@ def canonical_url(path: str) -> str:
     return f"{SITE_URL}/{path.lstrip('/')}"
 
 
+def absolute_url(path: str) -> str:
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+    if not path.startswith("/"):
+        path = "/" + path
+    return SITE_URL + path
+
+
+def json_ld_script(data: dict) -> str:
+    json_text = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+    json_text = json_text.replace("</script>", "<\\/script>")
+    return f'<script type="application/ld+json">{json_text}</script>'
+
+
+def page_json_ld(title: str, description: str, canonical: str) -> str:
+    return json_ld_script(
+        {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "url": canonical,
+            "name": title,
+            "description": description,
+            "inLanguage": "en",
+            "publisher": {
+                "@type": "Person",
+                "name": AUTHOR_NAME,
+            },
+        }
+    )
+
+
+def creative_work_json_ld(
+    title: str,
+    description: str,
+    canonical: str,
+    image_url: str,
+    post: Post,
+) -> str:
+    return json_ld_script(
+        {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "url": canonical,
+            "headline": title,
+            "description": description,
+            "image": image_url,
+            "author": {
+                "@type": "Person",
+                "name": AUTHOR_NAME,
+            },
+            "dateCreated": post.date,
+            "genre": post.post_type,
+            "keywords": ", ".join(post.tags),
+            "inLanguage": "en",
+        }
+    )
+
 def format_tag_label(tag: str) -> str:
     return tag.replace("-", " ")
 
@@ -530,6 +587,9 @@ def page_shell(
     canonical_path: str,
     pages: Iterable[Page] | None = None,
     posts: Iterable[Post] | None = None,
+    og_type: str = "website",
+    og_image: str | None = None,
+    json_ld: str | None = None,
 ) -> str:
     css_href = site_href("/css/style.css")
     js_href = site_href("/js/site.js")
@@ -537,6 +597,8 @@ def page_shell(
     avatar_2x = site_href("/images/me@2x.jpg")
     home_href = site_href("/")
     canonical = canonical_url(canonical_path)
+    og_image = absolute_url(og_image or avatar)
+    json_ld = json_ld or page_json_ld(title, description, canonical)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -545,11 +607,22 @@ def page_shell(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{escape(title)}</title>
   <meta name="description" content="{escape(description)}">
+  <meta name="robots" content="index, follow">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:type" content="{escape(og_type)}">
+  <meta property="og:title" content="{escape(title)}">
+  <meta property="og:description" content="{escape(description)}">
+  <meta property="og:url" content="{escape(canonical)}">
+  <meta property="og:site_name" content="{escape(SITE_NAME)}">
+  <meta property="og:image" content="{escape(og_image)}">
   <link rel="canonical" href="{escape(canonical)}">
-  <link rel="alternate" type="application/rss+xml" title="{escape(SITE_NAME)} feed" href="{escape(site_href('/feed.rss'))}">
+  <link rel="alternate" type="application/rss+xml" title="{escape(SITE_NAME)} feed" href="{escape(absolute_url(site_href('/feed.rss')))}">
+  <meta name="keywords" content="artwork, illustration, printmaking, painting, drawing, ceramics, cyanotype, linocut, art portfolio">
+  <meta name="author" content="{escape(AUTHOR_NAME)}">
   <link rel="stylesheet" href="{css_href}">
   <script src="{js_href}" defer></script>
   <script data-goatcounter="https://thomasguest.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  {json_ld}
 </head>
 <body>
   <header class="site-header">
@@ -646,15 +719,20 @@ def build_index_page(
     description = "Selected artwork by Thomas Guest." if home else "Artwork archive by Thomas Guest."
     heading = "" if home else '<h1 class="page-title">All work</h1>\n'
     body = f"{heading}{thumbnail_grid(ordered)}"
+    canonical_path = "/"
+    canonical = canonical_url(canonical_path)
     return page_shell(
         title=title,
         description=description,
         body=body,
         tags=tags,
         current_nav="home" if home else None,
-        canonical_path="/",
+        canonical_path=canonical_path,
         pages=pages or [],
         posts=posts,
+        og_type="website",
+        og_image=site_href("/images/me.jpg"),
+        json_ld=page_json_ld(title, description, canonical),
     )
 
 
@@ -666,15 +744,20 @@ def build_tag_page(tag: str, posts: list[Post], tags: list[str], pages: list[Pag
     )
     label = format_tag_label(tag)
     body = f'    <h1 class="page-title">#{escape(tag)}</h1>\n{thumbnail_grid(matching)}'
+    canonical_path = f"tags/{quote(tag_slug(tag))}"
+    canonical = canonical_url(canonical_path)
     return page_shell(
         title=f"{label} · {SITE_NAME}",
         description=f"Artwork tagged “{label}” by Thomas Guest.",
         body=body,
         tags=tags,
         current_nav=f"tag:{tag}",
-        canonical_path=f"tags/{quote(tag_slug(tag))}",
+        canonical_path=canonical_path,
         pages=pages or [],
         posts=posts,
+        og_type="website",
+        og_image=site_href("/images/me.jpg"),
+        json_ld=page_json_ld(f"{label} · {SITE_NAME}", f"Artwork tagged “{label}” by Thomas Guest.", canonical),
     )
 
 
@@ -724,15 +807,26 @@ def build_post_page(
         {post.body_html}
       </div>
     </article>"""
+    canonical_path = f"posts/{post.slug}"
+    canonical = canonical_url(canonical_path)
     return page_shell(
         title=f"{post.title} · {SITE_NAME}",
         description=f"{post.title} — {post.post_type}. Artwork by Thomas Guest.",
         body=body,
         tags=tags,
         current_nav=None,
-        canonical_path=f"posts/{post.slug}",
+        canonical_path=canonical_path,
         pages=pages or [],
         posts=posts or [],
+        og_type="article",
+        og_image=image,
+        json_ld=creative_work_json_ld(
+            f"{post.title} · {SITE_NAME}",
+            f"{post.title} — {post.post_type}. Artwork by Thomas Guest.",
+            canonical,
+            image,
+            post,
+        ),
     )
 
 
@@ -798,6 +892,42 @@ def build_rss(posts: list[Post]) -> str:
     return "\n".join(lines)
 
 
+def build_sitemap(posts: list[Post], tags: list[str], pages: list[Page]) -> str:
+    entries = [
+        ("/", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+        ("/feed.rss", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+    ]
+    for page in pages:
+        entries.append((f"/{page.slug}", datetime.now(timezone.utc).strftime("%Y-%m-%d")))
+    for tag in tags:
+        entries.append((f"/tags/{tag_slug(tag)}", datetime.now(timezone.utc).strftime("%Y-%m-%d")))
+    for post in posts:
+        entries.append((f"/posts/{post.slug}", post.date))
+
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    for path, date in entries:
+        lines.extend(
+            [
+                "  <url>",
+                f"    <loc>{xml_escape(SITE_URL + path)}</loc>",
+                f"    <lastmod>{xml_escape(date)}</lastmod>",
+                "  </url>",
+            ]
+        )
+    lines.append("</urlset>")
+    return "\n".join(lines)
+
+
+def build_robots() -> str:
+    return """User-agent: *
+Allow: /
+Sitemap: https://thomasguest.art/sitemap.xml
+"""
+
+
 def clean_stale_pages(active_slugs: set[str], active_tags: set[str]) -> None:
     stale_flat = ROOT / "about.html"
     if stale_flat.is_file():
@@ -842,6 +972,8 @@ def main() -> None:
 
     write_text(ROOT / "index.html", build_index_page(posts, tags, home=True, pages=pages))
     write_text(ROOT / "feed.rss", build_rss(posts))
+    write_text(ROOT / "sitemap.xml", build_sitemap(posts, tags, pages))
+    write_text(ROOT / "robots.txt", build_robots())
 
     active_slugs = {post.slug for post in posts}
     active_tags = set(tags)
