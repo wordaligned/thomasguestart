@@ -75,7 +75,7 @@ class Post:
     def etsy_url(self) -> str | None:
         if not self.etsy_listing_id:
             return None
-        return f"https://www.etsy.com/listing/{self.etsy_listing_id.strip()}"
+        return f"https://thomasguestart.etsy.com/listing/{self.etsy_listing_id.strip()}"
 
 
 @dataclass
