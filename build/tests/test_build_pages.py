@@ -206,6 +206,50 @@ class BuildPagesTests(unittest.TestCase):
         self.assertEqual(post.post_type, "Print")
         self.assertEqual(post.media, ["Linocut", "woodcut"])
 
+    def test_parse_post_supports_etsy_listing_header(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir) / "etsy-post"
+            path.write_text(
+                "Title: Example\n"
+                "Type: Print\n"
+                "Media: Linocut\n"
+                "Size: 10x10\n"
+                "Date: 2026\n"
+                "Tags: print\n"
+                "Etsy: 123456789\n"
+                "-----\n\n"
+                "Body",
+                encoding="utf-8",
+            )
+
+            post = build_script.parse_post(path)
+
+        self.assertEqual(post.etsy_listing_id, "123456789")
+        self.assertEqual(post.etsy_url, "https://www.etsy.com/listing/123456789")
+
+    def test_post_detail_page_renders_prominent_etsy_button(self) -> None:
+        post = build_script.Post(
+            slug="example",
+            title="Example",
+            post_type="Print",
+            media=["Linocut"],
+            size="10x10",
+            date="2026",
+            tags=["print"],
+            pinned=None,
+            body_md="",
+            body_html="",
+            source_path=ROOT / "build" / "posts" / "example",
+            content_hash="abc",
+            etsy_listing_id="123456789",
+        )
+
+        html = build_script.build_post_page(post, [], pages=[], posts=[post])
+
+        self.assertIn('href="https://www.etsy.com/listing/123456789"', html)
+        self.assertIn('target="_blank"', html)
+        self.assertIn('artwork__etsy-button', html)
+
     def test_source_posts_use_type_and_media_headers(self) -> None:
         post_paths = sorted((ROOT / "build" / "posts").iterdir())
         for path in post_paths:

@@ -69,6 +69,13 @@ class Post:
     body_html: str
     source_path: Path
     content_hash: str
+    etsy_listing_id: str | None = None
+
+    @property
+    def etsy_url(self) -> str | None:
+        if not self.etsy_listing_id:
+            return None
+        return f"https://www.etsy.com/listing/{self.etsy_listing_id.strip()}"
 
 
 @dataclass
@@ -308,6 +315,10 @@ def parse_post(path: Path) -> Post:
     if not tags:
         raise ValueError(f"Post '{slug}' must include at least one tag")
 
+    etsy_listing_id = None
+    if "etsy" in header:
+        etsy_listing_id = header["etsy"].strip() or None
+
     body_html = markdown.markdown(
         body_md,
         extensions=["extra", "smarty"],
@@ -332,6 +343,7 @@ def parse_post(path: Path) -> Post:
         body_html=body_html,
         source_path=path,
         content_hash=content_hash(raw),
+        etsy_listing_id=etsy_listing_id,
     )
 
 
@@ -769,6 +781,13 @@ def build_post_page(
 ) -> str:
     image = site_href(f"/images/{post.slug}.jpg")
     image_mobile = site_href(f"/images/{post.slug}-mobile.jpg")
+    etsy_button = ""
+    if post.etsy_url:
+        etsy_button = (
+            f'<p class="artwork__etsy-wrap">'
+            f'<a class="artwork__etsy-button" href="{escape(post.etsy_url)}" rel="noopener noreferrer" target="_blank">'
+            f'Buy on Etsy</a></p>'
+        )
     facet_links: list[str] = []
     seen_facets: set[str] = set()
     for facet in [post.post_type, *post.media, *post.tags]:
@@ -799,6 +818,7 @@ def build_post_page(
           <dt>Date</dt>
           <dd>{escape(post.date)}</dd>
         </dl>
+        {etsy_button}
         <ul class="artwork__tags">
           {tag_links}
         </ul>
