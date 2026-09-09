@@ -576,6 +576,8 @@ def nav_items(
         items.append((label, href, f"type:{slugify(post_type)}"))
 
     for page in pages or []:
+        if page.slug == "privacy":
+            continue
         label = page.menu_title or page.slug
         href = site_href(f"/{page.slug}")
         items.append((label, href, f"page:{page.slug}"))
@@ -654,25 +656,26 @@ def page_shell(
   <main class="site-main">
 {body}
   </main>
-  <footer class="site-footer">
-    <div class="site-footer__inner">
-      <div class="site-footer__identity">
-        <span class="site-footer__name">{escape(AUTHOR_NAME)}</span>
-        <a href="mailto:{escape(AUTHOR_EMAIL)}">{escape(AUTHOR_EMAIL)}</a>
-      </div>
-      <div>
-        <a href="{escape(INSTAGRAM_URL)}" target="_blank" rel="noopener noreferrer" class="instagram-link">
-        <svg xmlns="http://w3.org" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
-        </svg>
-        @thosguest
-        </a>
-        <a href="{escape(ETSY_URL)}" rel="noopener noreferrer" target="_blank">Etsy</a>
-      </div>
-    </div>
-  </footer>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <div class="site-footer__identity">
+                <span class="site-footer__name">{escape(AUTHOR_NAME)}</span>
+                <a href="mailto:{escape(AUTHOR_EMAIL)}">{escape(AUTHOR_EMAIL)}</a>
+            </div>
+            <div class="site-footer__links">
+                <a href="{escape(INSTAGRAM_URL)}" target="_blank" rel="noopener noreferrer" class="instagram-link">
+                <svg xmlns="http://www.w3.org" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+                </svg>
+                @thosguest
+                </a>
+                <a href="{escape(ETSY_URL)}" rel="noopener noreferrer" target="_blank">Etsy</a>
+                <a href="{site_href('/privacy')}" class="privacy-link">Privacy</a>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
 """
