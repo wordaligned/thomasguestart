@@ -17,7 +17,7 @@ from urllib.parse import quote
 from xml.sax.saxutils import escape as xml_escape
 
 import markdown
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from spellchecker import SpellChecker
 
@@ -260,6 +260,9 @@ def load_pages() -> list[Page]:
     for path in sorted(PAGES_DIR.iterdir()):
         if not path.is_file() or path.name.startswith("."):
             continue
+        if path.name.endswith("~"):
+            log.debug("Skipping backup page file %s", path.name)
+            continue
         if not SLUG_RE.fullmatch(path.name):
             log.debug("Skipping non-page file %s", path.name)
             continue
@@ -355,6 +358,9 @@ def load_posts() -> list[Post]:
     for path in sorted(POSTS_DIR.iterdir()):
         if not path.is_file() or path.name.startswith("."):
             continue
+        if path.name.endswith("~"):
+            log.debug("Skipping backup post file %s", path.name)
+            continue
         if not SLUG_RE.fullmatch(path.name):
             log.debug("Skipping non-post file %s", path.name)
             continue
@@ -400,6 +406,63 @@ def save_jpeg(image: Image.Image, path: Path, *, quality: int = 85) -> None:
     rgb.save(path, format="JPEG", quality=quality, optimize=True)
 
 
+
+def create_watermarked_image(
+    source: Path, destination: Path, *, text: str = "© thomasguest.art", target_ratio: float | None = None
+) -> None:
+    """Create a bottom-right watermark on a copy of `source` and write to `destination`.
+
+    If `target_ratio` is provided the image will be padded with black bars to match that
+    ratio before the watermark is applied. This padding is only applied to the watermarked
+    output so the main web and mobile images remain unpadded.
+    """
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with Image.open(source) as im:
+        base = im.convert("RGBA")
+        width, height = base.size
+
+        draw_canvas = base
+
+        # optionally pad to target ratio into a new canvas so original image is not modified
+        if target_ratio is not None:
+            try:
+                current = width / height if height else 0
+                if abs(current - target_ratio) > 0.001:
+                    if target_ratio > current:
+                        new_w = int(round(target_ratio * height))
+                        new_h = height
+                    else:
+                        new_w = width
+                        new_h = int(round(width / target_ratio))
+
+                    canvas = Image.new("RGBA", (new_w, new_h), (0, 0, 0, 255))
+                    left = (new_w - width) // 2
+                    top = (new_h - height) // 2
+                    canvas.paste(base, (left, top))
+                    draw_canvas = canvas
+            except Exception:
+                log.exception("Failed to pad image %s to ratio %s", source, target_ratio)
+                raise
+
+        draw = ImageDraw.Draw(draw_canvas)
+
+        # choose font size relative to image width
+        font_size = max(12, int(draw_canvas.size[0] * 0.04))
+        font = ImageFont.truetype("arial.ttf", font_size)
+        _, _, text_w, text_h = draw.textbbox((0, 0), text, font=font)
+
+        padding = int(draw_canvas.size[0] * 0.02)
+        x = draw_canvas.size[0] - padding - text_w
+        y = draw_canvas.size[1] - padding - text_h
+
+        # draw text with a slight stroke for contrast
+        draw.text((x, y), text, font=font, fill=(255, 255, 255, 200), stroke_width=2, stroke_fill=(0, 0, 0, 160))
+
+        # convert back to RGB and save
+        rgb = draw_canvas.convert("RGB")
+        save_jpeg(rgb, destination, quality=85)
+
+
 def resize_image(source: Path, destination: Path, max_edge: int, *, quality: int = 85) -> None:
     with Image.open(source) as image:
         copy = image.copy()
@@ -423,16 +486,33 @@ def build_avatar() -> None:
             save_jpeg(cropped, ROOT / "images" / name, quality=88)
 
 
-def deploy_image_variants(filename: str) -> None:
+def deploy_image_variants(filename: str, target_ratio: float | None = None) -> None:
     source = ensure_image_source(filename)
     stem = Path(filename).stem
     suffix = Path(filename).suffix
-    resize_image(source, ROOT / "images" / filename, DETAIL_MAX)
+    dest = ROOT / "images" / filename
+    resize_image(source, dest, DETAIL_MAX)
+
+    # create a watermarked copy of the web-scale image (pad only the watermarked output)
+    try:
+        create_watermarked_image(dest, ROOT / "images" / "watermarked" / filename, target_ratio=target_ratio)
+    except Exception:
+        log.exception("Failed to create watermarked image for %s", filename)
+        raise
+
     resize_image(source, ROOT / "images" / f"{stem}-mobile{suffix}", DETAIL_MOBILE_MAX)
 
 
 def build_post_images(post: Post) -> None:
+    # deploy hero first, then use its aspect ratio for other watermarked images
     deploy_image_variants(f"{post.slug}.jpg")
+    try:
+        with Image.open(ROOT / "images" / f"{post.slug}.jpg") as hero_im:
+            hero_w, hero_h = hero_im.size
+            hero_ratio = hero_w / hero_h if hero_h else None
+    except Exception:
+        log.exception("Failed to open hero image for post %s", post.slug)
+        raise
     resize_image(
         ensure_source_image(post.slug),
         ROOT / "images" / "thumbnails" / f"{post.slug}.jpg",
@@ -441,7 +521,7 @@ def build_post_images(post: Post) -> None:
 
     for image_name in extract_markdown_images(post.body_md):
         if image_name != f"{post.slug}.jpg":
-            deploy_image_variants(image_name)
+            deploy_image_variants(image_name, target_ratio=hero_ratio)
 
 
 def build_page_images(page: Page) -> None:

@@ -1,6 +1,6 @@
 build/venv/
 .build-state.json
-build/notes.txt
+build/notes/
 *~
 __pycache__/
 build/video/
