@@ -425,6 +425,22 @@ class BuildPagesTests(unittest.TestCase):
 
         deploy_mock.assert_called_once_with("about.jpg")
 
+    def test_save_jpeg_skips_rewriting_identical_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir) / "output.jpg"
+            image = build_script.Image.new("RGB", (20, 20), "white")
+
+            first_written = build_script.save_jpeg(image, path, quality=85)
+            first_bytes = path.read_bytes()
+            first_mtime = path.stat().st_mtime_ns
+
+            second_written = build_script.save_jpeg(image, path, quality=85)
+
+            self.assertTrue(first_written)
+            self.assertFalse(second_written)
+            self.assertEqual(path.read_bytes(), first_bytes)
+            self.assertEqual(path.stat().st_mtime_ns, first_mtime)
+
 
 if __name__ == "__main__":
     unittest.main()

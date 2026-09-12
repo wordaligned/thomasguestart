@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import logging
 import re
@@ -75,7 +76,7 @@ class Post:
     def etsy_url(self) -> str | None:
         if not self.etsy_listing_id:
             return None
-        return f"https://thomasguestart.etsy.com/listing/{self.etsy_listing_id.strip()}"
+        return f"https://www.etsy.com/listing/{self.etsy_listing_id.strip()}"
 
 
 @dataclass
@@ -400,11 +401,20 @@ def update_spell_check_state(posts: Iterable[Post]) -> None:
     write_json(STATE_FILE, state)
 
 
-def save_jpeg(image: Image.Image, path: Path, *, quality: int = 85) -> None:
+def save_jpeg(image: Image.Image, path: Path, *, quality: int = 85) -> bool:
+    """Write a JPEG only when the output bytes differ from the existing file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     rgb = image.convert("RGB")
-    rgb.save(path, format="JPEG", quality=quality, optimize=True)
 
+    buffer = io.BytesIO()
+    rgb.save(buffer, format="JPEG", quality=quality, optimize=True)
+    data = buffer.getvalue()
+
+    if path.exists() and path.read_bytes() == data:
+        return False
+
+    path.write_bytes(data)
+    return True
 
 
 def create_watermarked_image(
