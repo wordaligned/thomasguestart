@@ -417,6 +417,14 @@ def save_jpeg(image: Image.Image, path: Path, *, quality: int = 85) -> bool:
     return True
 
 
+def should_skip_image_generation(source: Path, destination: Path) -> bool:
+    if source.resolve() == destination.resolve():
+        return True
+    if not destination.exists() or not source.exists():
+        return False
+    return source.stat().st_mtime_ns <= destination.stat().st_mtime_ns
+
+
 def create_watermarked_image(
     source: Path, destination: Path, *, text: str = "© thomasguest.art", target_ratio: float | None = None
 ) -> None:
@@ -426,6 +434,9 @@ def create_watermarked_image(
     ratio before the watermark is applied. This padding is only applied to the watermarked
     output so the main web and mobile images remain unpadded.
     """
+    if should_skip_image_generation(source, destination):
+        return
+
     destination.parent.mkdir(parents=True, exist_ok=True)
     with Image.open(source) as im:
         base = im.convert("RGBA")
@@ -473,11 +484,14 @@ def create_watermarked_image(
         save_jpeg(rgb, destination, quality=85)
 
 
-def resize_image(source: Path, destination: Path, max_edge: int, *, quality: int = 85) -> None:
+def resize_image(source: Path, destination: Path, max_edge: int, *, quality: int = 85) -> bool:
+    if should_skip_image_generation(source, destination):
+        return False
+
     with Image.open(source) as image:
         copy = image.copy()
         copy.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
-        save_jpeg(copy, destination, quality=quality)
+        return save_jpeg(copy, destination, quality=quality)
 
 
 def build_avatar() -> None:

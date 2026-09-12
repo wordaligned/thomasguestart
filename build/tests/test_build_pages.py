@@ -441,6 +441,24 @@ class BuildPagesTests(unittest.TestCase):
             self.assertEqual(path.read_bytes(), first_bytes)
             self.assertEqual(path.stat().st_mtime_ns, first_mtime)
 
+    def test_resize_image_skips_when_target_is_newer_than_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            source = Path(tmp_dir) / "source.jpg"
+            target = Path(tmp_dir) / "target.jpg"
+            source_image = build_script.Image.new("RGB", (100, 100), "white")
+            source_image.save(source, format="JPEG", quality=85)
+            target_image = build_script.Image.new("RGB", (100, 100), "black")
+            target_image.save(target, format="JPEG", quality=85)
+
+            newer_time = source.stat().st_mtime_ns + 10_000
+            old_time = target.stat().st_mtime_ns - 10_000
+            import os
+            os.utime(source, ns=(old_time, old_time))
+            os.utime(target, ns=(newer_time, newer_time))
+
+            self.assertFalse(build_script.resize_image(source, target, 50))
+            self.assertEqual(target.read_bytes(), build_script.Image.open(target).tobytes())
+
 
 if __name__ == "__main__":
     unittest.main()
