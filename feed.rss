@@ -5,7 +5,7 @@
 <link>https://thomasguest.art</link>
 <description>Selected artwork by Thomas Guest.</description>
 <language>en-gb</language>
-<lastBuildDate>Sat, 12 Sep 2026 12:05:27 +0000</lastBuildDate>
+<lastBuildDate>Wed, 16 Sep 2026 12:13:29 +0000</lastBuildDate>
 <item>
 <title>Archeopteryx Tile</title>
 <link>https://thomasguest.art/posts/archeopteryx-tile</link>
@@ -272,6 +272,19 @@ I used the vintage <a href="https://swanseaprintworkshop.org.uk/what-we-do/relie
 <guid isPermaLink="true">https://thomasguest.art/posts/shoreline-screenprint</guid>
 <description><![CDATA[<p><img src="https://thomasguest.art/images/shoreline-screenprint.jpg" alt="Shoreline Screenprint"></p><p>A limited edition of three screenprints made using paper stencils, taking inspiration from the seaweed and mermaids purses I see on the Swansea Bay shoreline.</p>]]></description>
 <category>screenprint</category>
+</item>
+<item>
+<title>Squabbling Seagulls</title>
+<link>https://thomasguest.art/posts/squabbling-seagulls</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/squabbling-seagulls</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/squabbling-seagulls.jpg" alt="Squabbling Seagulls"></p><p>This print depicts a screech of 6 black headed seagulls and 3 crabs. It is hand-printed using a baren, and blocks and stamps carved out of Japanese vinyl. The blocks are used for the birds, the stamps for the crabs.</p>
+<p><picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/squabbling-seagulls-1-mobile.jpg"><img alt="design details" src="https://thomasguest.art/images/squabbling-seagulls-1.jpg"></picture></p>
+<p>The design is based on an einstein tessellation. Here, &ldquo;einstein&rdquo; derives from two German words &ldquo;ein&rdquo; and &ldquo;stein&rdquo;, meaning &ldquo;one stone&rdquo;: a single shape can tile a flat surface without any gaps. Astonishingly, the tessellation is <em>aperiodic</em>. That is, however large the surface, the pattern will never repeat.</p>
+<p>I live by the sea, and admire the seagulls’ acrobatic flight. If there’s any sign of food they squabble amongst themselves.</p>
+<p><picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/flock-of-seagulls-1-mobile.jpg"><img alt="designing the seagull tile using isometric graph paper" src="https://thomasguest.art/images/flock-of-seagulls-1.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/flock-of-seagulls-2-mobile.jpg"><img alt="we need mirror image tiles carved out" src="https://thomasguest.art/images/flock-of-seagulls-2.jpg"></picture></p>
+<p><video controls preload="metadata" class="post-video"><source src="/videos/squabbling-seagulls.mp4" type="video/mp4">Your browser does not support HTML5 video.</video></p>]]></description>
+<category>linocut</category>
 </item>
 <item>
 <title>Taffy Tile</title>
