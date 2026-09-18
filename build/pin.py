@@ -160,6 +160,15 @@ def create_pin(payload: dict, access_token: str) -> dict:
     req = Request(API_URL, data=data, method="POST")
     req.add_header("Authorization", f"Bearer {access_token}")
     req.add_header("Content-Type", "application/json")
+    headers = "\n".join(f"  {k}: {v}" for k, v in req.header_items())
+    print(
+        f"--- Outgoing HTTP Request ---\n"
+        f"Method: {req.get_method()}\n"
+        f"URL:    {req.full_url}\n"
+        f"Headers:\n{headers}\n"
+        f"Body:\nPIN CREATE DATA...\n"
+        f"-----------------------------"
+    )
     try:
         with urlopen(req) as resp:
             resp_text = resp.read().decode("utf-8")

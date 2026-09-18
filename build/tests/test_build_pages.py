@@ -227,6 +227,28 @@ class BuildPagesTests(unittest.TestCase):
         self.assertEqual(post.etsy_listing_id, "123456789")
         self.assertEqual(post.etsy_url, "https://www.etsy.com/listing/123456789")
 
+    def test_parse_post_embeds_youtube_short_links_in_html(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir) / "youtube-post"
+            path.write_text(
+                "Title: Example\n"
+                "Type: Print\n"
+                "Media: Linocut\n"
+                "Size: 10x10\n"
+                "Date: 2026\n"
+                "Tags: print\n"
+                "-----\n\n"
+                "Body\n\n"
+                "[[YOUTUBE https://youtube.com/shorts/U2mcRUFw4ec]]",
+                encoding="utf-8",
+            )
+
+            post = build_script.parse_post(path)
+
+        self.assertIn('https://www.youtube.com/embed/U2mcRUFw4ec', post.body_html)
+        self.assertIn('playsinline=1', post.body_html)
+        self.assertIn('<iframe', post.body_html)
+
     def test_post_detail_page_renders_prominent_etsy_button(self) -> None:
         post = build_script.Post(
             slug="example",

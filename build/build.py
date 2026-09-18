@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import logging
 import re
@@ -14,7 +13,7 @@ from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
 from typing import Iterable
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlparse
 from xml.sax.saxutils import escape as xml_escape
 
 import markdown
@@ -45,6 +44,7 @@ WORD_RE = re.compile(r"[A-Za-z']+")
 INLINE_IMAGE_RE = re.compile(r"!\[[^\]]*\]\(/images/([^)]+)\)")
 PROSE_IMG_RE = re.compile(r'<img([^>]*?\s)src="/images/([^"]+)"([^>]*)>', re.IGNORECASE)
 VIDEO_MACRO_RE = re.compile(r"\[\[VIDEO\]\]")
+YOUTUBE_MACRO_RE = re.compile(r"\[\[YOUTUBE\s+(https?://[^\s\]]+)\]\]")
 
 THUMB_MAX = 420
 DETAIL_MAX = 1400
@@ -76,7 +76,7 @@ class Post:
     def etsy_url(self) -> str | None:
         if not self.etsy_listing_id:
             return None
-        return f"https://www.etsy.com/listing/{self.etsy_listing_id.strip()}"
+        return f"https://thomasguestart.etsy.com/listing/{self.etsy_listing_id.strip()}"
 
 
 @dataclass
@@ -185,6 +185,62 @@ def embed_video_macros(body_html: str, slug: str) -> str:
     return VIDEO_MACRO_RE.sub(video_player, body_html)
 
 
+def youtube_embed_url(url: str) -> str | None:
+    parsed = urlparse(url.strip())
+    host = parsed.netloc.lower().replace("www.", "")
+    path = parsed.path or ""
+    query = parsed.query
+
+    if host == "youtu.be":
+        video_id = path.strip("/")
+    elif host.endswith("youtube.com"):
+        if path.startswith("/shorts/"):
+            video_id = path.split("/", 2)[-1]
+        elif path.startswith("/embed/"):
+            video_id = path.split("/", 2)[-1]
+        elif path.startswith("/watch"):
+            video_id = parse_qs(query).get("v", [""])[0]
+        else:
+            return None
+    else:
+        return None
+
+    if not video_id:
+        return None
+    video_id = video_id.split("?")[0].split("&")[0]
+    if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
+        return None
+    return f"https://www.youtube.com/embed/{video_id}?playsinline=1&rel=0"
+
+
+def embed_youtube_macros(body_html: str) -> str:
+    if not YOUTUBE_MACRO_RE.search(body_html):
+        return body_html
+
+    def replace(match: re.Match[str]) -> str:
+        url = match.group(1)
+        embed_url = youtube_embed_url(url)
+        if not embed_url:
+            log.warning("Unsupported YouTube URL: %s", url)
+            return match.group(0)
+
+        parsed = urlparse(url.strip())
+        short_url = parsed.netloc.lower().replace("www.", "") == "youtu.be" or (
+            parsed.netloc.lower().replace("www.", "").endswith("youtube.com")
+            and parsed.path.startswith("/shorts/")
+        )
+        class_name = "youtube-embed youtube-embed--short" if short_url else "youtube-embed"
+        return (
+            f'<div class="{class_name}">'
+            f'<iframe src="{embed_url}" title="YouTube video player" '
+            'loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
+            'allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>'
+            '</div>'
+        )
+
+    return YOUTUBE_MACRO_RE.sub(replace, body_html)
+
+
 def transform_text(text: str, context: str) -> str:
     updated = text
     if "'" in updated:
@@ -237,6 +293,7 @@ def parse_page(path: Path) -> Page:
         output_format="html5",
     )
     body_html = enhance_prose_images(body_html)
+    body_html = embed_youtube_macros(body_html)
 
     for image_name in extract_markdown_images(body_md):
         ensure_image_source(image_name)
@@ -330,6 +387,7 @@ def parse_post(path: Path) -> Post:
     )
     body_html = enhance_prose_images(body_html)
     body_html = embed_video_macros(body_html, slug)
+    body_html = embed_youtube_macros(body_html)
 
     for image_name in extract_markdown_images(body_md):
         ensure_image_source(image_name)
@@ -401,28 +459,11 @@ def update_spell_check_state(posts: Iterable[Post]) -> None:
     write_json(STATE_FILE, state)
 
 
-def save_jpeg(image: Image.Image, path: Path, *, quality: int = 85) -> bool:
-    """Write a JPEG only when the output bytes differ from the existing file."""
+def save_jpeg(image: Image.Image, path: Path, *, quality: int = 85) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     rgb = image.convert("RGB")
+    rgb.save(path, format="JPEG", quality=quality, optimize=True)
 
-    buffer = io.BytesIO()
-    rgb.save(buffer, format="JPEG", quality=quality, optimize=True)
-    data = buffer.getvalue()
-
-    if path.exists() and path.read_bytes() == data:
-        return False
-
-    path.write_bytes(data)
-    return True
-
-
-def should_skip_image_generation(source: Path, destination: Path) -> bool:
-    if source.resolve() == destination.resolve():
-        return True
-    if not destination.exists() or not source.exists():
-        return False
-    return source.stat().st_mtime_ns <= destination.stat().st_mtime_ns
 
 
 def create_watermarked_image(
@@ -434,9 +475,6 @@ def create_watermarked_image(
     ratio before the watermark is applied. This padding is only applied to the watermarked
     output so the main web and mobile images remain unpadded.
     """
-    if should_skip_image_generation(source, destination):
-        return
-
     destination.parent.mkdir(parents=True, exist_ok=True)
     with Image.open(source) as im:
         base = im.convert("RGBA")
@@ -484,14 +522,11 @@ def create_watermarked_image(
         save_jpeg(rgb, destination, quality=85)
 
 
-def resize_image(source: Path, destination: Path, max_edge: int, *, quality: int = 85) -> bool:
-    if should_skip_image_generation(source, destination):
-        return False
-
+def resize_image(source: Path, destination: Path, max_edge: int, *, quality: int = 85) -> None:
     with Image.open(source) as image:
         copy = image.copy()
         copy.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
-        return save_jpeg(copy, destination, quality=quality)
+        save_jpeg(copy, destination, quality=quality)
 
 
 def build_avatar() -> None:
