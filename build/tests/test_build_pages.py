@@ -508,8 +508,9 @@ class BuildPagesTests(unittest.TestCase):
             os.utime(source, ns=(old_time, old_time))
             os.utime(target, ns=(newer_time, newer_time))
 
+            original = target.read_bytes()
             self.assertFalse(build_script.resize_image(source, target, 50))
-            self.assertEqual(target.read_bytes(), build_script.Image.open(target).tobytes())
+            self.assertEqual(target.read_bytes(), original)
 
 
 if __name__ == "__main__":

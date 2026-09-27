@@ -459,10 +459,33 @@ def update_spell_check_state(posts: Iterable[Post]) -> None:
     write_json(STATE_FILE, state)
 
 
-def save_jpeg(image: Image.Image, path: Path, *, quality: int = 85) -> None:
+def save_jpeg(image: Image.Image, path: Path, *, quality: int = 85) -> bool:
+    """Save `image` as a JPEG to `path`.
+
+    If the destination already exists and the JPEG bytes would be identical,
+    the file is not rewritten and the function returns False. Otherwise the
+    file is written and the function returns True.
+    """
+    from io import BytesIO
+
     path.parent.mkdir(parents=True, exist_ok=True)
     rgb = image.convert("RGB")
-    rgb.save(path, format="JPEG", quality=quality, optimize=True)
+
+    buf = BytesIO()
+    rgb.save(buf, format="JPEG", quality=quality, optimize=True)
+    data = buf.getvalue()
+
+    if path.exists():
+        try:
+            existing = path.read_bytes()
+            if existing == data:
+                return False
+        except Exception:
+            # If we can't read existing file for any reason, fall through and overwrite
+            pass
+
+    path.write_bytes(data)
+    return True
 
 
 
@@ -522,11 +545,28 @@ def create_watermarked_image(
         save_jpeg(rgb, destination, quality=85)
 
 
-def resize_image(source: Path, destination: Path, max_edge: int, *, quality: int = 85) -> None:
+def resize_image(source: Path, destination: Path, max_edge: int, *, quality: int = 85) -> bool:
+    """Resize `source` into `destination` with longest edge `max_edge`.
+
+    If `destination` exists and is newer than `source` the resize is skipped
+    and the function returns False. Otherwise the image is (re)generated and
+    the function returns True if the output file was written.
+    """
+    try:
+        if destination.exists():
+            dest_mtime = destination.stat().st_mtime_ns
+            src_mtime = source.stat().st_mtime_ns
+            log.debug("resize_image mtime dest=%s src=%s", dest_mtime, src_mtime)
+            if dest_mtime >= src_mtime:
+                return False
+    except Exception:
+        # If we can't stat files for any reason, continue and attempt resize
+        pass
+
     with Image.open(source) as image:
         copy = image.copy()
         copy.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
-        save_jpeg(copy, destination, quality=quality)
+        return save_jpeg(copy, destination, quality=quality)
 
 
 def build_avatar() -> None:
