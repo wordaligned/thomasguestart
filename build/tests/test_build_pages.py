@@ -5,15 +5,22 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE_PATH = ROOT / "build" / "build.py"
+BUILD_MODULE_PATH = ROOT / "build" / "build.py"
+PIN_MODULE_PATH = ROOT / "build" / "pin.py"
 
-spec = importlib.util.spec_from_file_location("build_script", MODULE_PATH)
+spec = importlib.util.spec_from_file_location("build_script", BUILD_MODULE_PATH)
 assert spec and spec.loader
 build_script = importlib.util.module_from_spec(spec)
 import sys
 
 sys.modules[spec.name] = build_script
 spec.loader.exec_module(build_script)
+
+pin_spec = importlib.util.spec_from_file_location("pin_script", PIN_MODULE_PATH)
+assert pin_spec and pin_spec.loader
+pin_script = importlib.util.module_from_spec(pin_spec)
+sys.modules[pin_spec.name] = pin_script
+pin_spec.loader.exec_module(pin_script)
 
 
 class BuildPagesTests(unittest.TestCase):
@@ -226,6 +233,29 @@ class BuildPagesTests(unittest.TestCase):
 
         self.assertEqual(post.etsy_listing_id, "123456789")
         self.assertEqual(post.etsy_url, "https://www.etsy.com/listing/123456789")
+
+    def test_pin_script_supports_listing_mode(self) -> None:
+        with patch.object(pin_script, "read_config", return_value={"access_token": "secret"}), \
+             patch.object(pin_script, "list_pins", return_value=[{"id": "abc", "title": "Example", "link": "https://thomasguest.art/posts/example"}]):
+            rc = pin_script.main(["pin.py", "--list"])
+
+        self.assertEqual(rc, 0)
+
+    def test_build_pin_description_includes_media_size_and_body(self) -> None:
+        description = pin_script.build_pin_description(
+            "Example",
+            ["Linocut", "Woodcut"],
+            "10x10",
+            "This is the body text.\n\nIt has two paragraphs.",
+            "123456789",
+        )
+
+        self.assertIn("Media: Linocut, Woodcut", description)
+        self.assertIn("Size: 10x10", description)
+        self.assertIn("This artwork is available for sale on Etsy.", description)
+        self.assertIn("Original artwork and prints by Thomas Guest.", description)
+        self.assertIn("This is the body text.", description)
+        self.assertIn("It has two paragraphs.", description)
 
     def test_parse_post_embeds_youtube_short_links_in_html(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

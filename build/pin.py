@@ -22,8 +22,9 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 import logging
 
@@ -160,15 +161,6 @@ def create_pin(payload: dict, access_token: str) -> dict:
     req = Request(API_URL, data=data, method="POST")
     req.add_header("Authorization", f"Bearer {access_token}")
     req.add_header("Content-Type", "application/json")
-    headers = "\n".join(f"  {k}: {v}" for k, v in req.header_items())
-    print(
-        f"--- Outgoing HTTP Request ---\n"
-        f"Method: {req.get_method()}\n"
-        f"URL:    {req.full_url}\n"
-        f"Headers:\n{headers}\n"
-        f"Body:\nPIN CREATE DATA...\n"
-        f"-----------------------------"
-    )
     try:
         with urlopen(req) as resp:
             resp_text = resp.read().decode("utf-8")
@@ -183,10 +175,71 @@ def create_pin(payload: dict, access_token: str) -> dict:
         raise RuntimeError(f"Network error: {e}") from e
 
 
+def plain_text_from_markdown(markdown_text: str) -> str:
+    text = markdown_text.strip()
+    if not text:
+        return ""
+    text = re.sub(r"\[\[VIDEO\]\]", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\[\[YOUTUBE\s+[^\]]+\]\]", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"!\[.*?\]\([^)]*\)", "", text)
+    text = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", text)
+    text = re.sub(r"[*_`>#-]", "", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def build_pin_description(post_title: str, media: List[str], size: str, body_md: str, etsy_listing_id: Optional[str] = None) -> str:
+    media_text = ", ".join(media) if media else "Unknown"
+    size_text = size.strip() if size else "Unknown"
+    sale_message = "This artwork is available for sale on Etsy." if etsy_listing_id else "This artwork is for sale."
+    body_text = plain_text_from_markdown(body_md)
+    studio_note = "Original artwork and prints by Thomas Guest."
+
+    description_parts = [
+        post_title,
+        f"Media: {media_text}",
+        f"Size: {size_text}",
+        sale_message,
+        studio_note,
+    ]
+    if body_text:
+        description_parts.append("")
+        description_parts.append(body_text)
+    return "\n\n".join(description_parts)
+
+
+def list_pins(access_token: str, limit: int = 25) -> List[Dict[str, Any]]:
+    params = urlencode({"limit": limit})
+    req = Request(f"{API_URL}?{params}", method="GET")
+    req.add_header("Authorization", f"Bearer {access_token}")
+    req.add_header("Accept", "application/json")
+    try:
+        with urlopen(req) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except HTTPError as e:
+        try:
+            body = e.read().decode("utf-8")
+        except Exception:
+            body = "<no body>"
+        raise RuntimeError(f"HTTP {e.code} {e.reason}: {body}") from e
+    except URLError as e:
+        raise RuntimeError(f"Network error: {e}") from e
+
+    if isinstance(payload, dict):
+        items = payload.get("items")
+        if isinstance(items, list):
+            return items
+        return [payload]
+    if isinstance(payload, list):
+        return payload
+    return []
+
+
 def main(argv: list[str]) -> int:
-    # support optional --sandbox and --dry-run flags
+    # support optional --sandbox, --dry-run, and --list flags
     sandbox = False
     dry_run = False
+    list_mode = False
     args = list(argv[1:])
     if "--sandbox" in args:
         sandbox = True
@@ -194,6 +247,51 @@ def main(argv: list[str]) -> int:
     if "--dry-run" in args:
         dry_run = True
         args.remove("--dry-run")
+    if "--list" in args:
+        list_mode = True
+        args.remove("--list")
+
+    if list_mode:
+        if len(args) > 1:
+            print("Usage: python pin.py [--sandbox] --list\nExample: python pin.py --list")
+            return 2
+
+        try:
+            cfg = read_config(Path(CONFIG_FILE))
+        except FileNotFoundError:
+            log.exception("Credentials file missing: %s", CONFIG_FILE)
+            raise
+
+        if sandbox:
+            globals()["API_URL"] = SANDBOX_API_URL
+            access_token = cfg.get("access_token_sandbox") or cfg.get("sandbox_access_token") or cfg.get("access_token")
+            print("Using sandbox Pinterest API")
+        else:
+            access_token = cfg.get("access_token")
+
+        if not access_token:
+            print("PINTEREST credentials missing `access_token` (or sandbox token when --sandbox) in build/notes/PINTEREST")
+            return 5
+
+        try:
+            pins = list_pins(access_token)
+        except Exception:
+            log.exception("Listing Pinterest pins failed")
+            raise
+
+        if not pins:
+            print("No pins found.")
+            return 0
+
+        print(f"Pinterest pins ({len(pins)}):")
+        for index, pin in enumerate(pins, 1):
+            title = pin.get("title") or pin.get("alt_text") or "(untitled)"
+            link = pin.get("link") or pin.get("url") or ""
+            pin_id = pin.get("id") or "?"
+            print(f"{index}. {pin_id}: {title}")
+            if link:
+                print(f"   link: {link}")
+        return 0
 
     if len(args) != 1:
         print("Usage: python pin.py [--sandbox] [--dry-run] <path-to-build-post>\nExample: python pin.py --dry-run build/posts/alan")
@@ -233,8 +331,11 @@ def main(argv: list[str]) -> int:
 
     post_title = header.get("title") or slug
     post_type = header.get("type") or header.get("post_type") or ""
+    media = [t.strip() for t in (header.get("media") or "").split(",") if t.strip()]
+    size = header.get("size") or ""
     tags = [t.strip() for t in (header.get("tags") or "").split(",") if t.strip()]
     date = header.get("date") or ""
+    etsy_listing_id = header.get("etsy") or ""
 
     # choose board id based on type/tags
     board_id = choose_board_id(cfg, post_type, tags)
@@ -250,7 +351,7 @@ def main(argv: list[str]) -> int:
 
     # construct title/description/link like build.py
     title = f"{post_title} · {SITE_NAME}"
-    description = f"{post_title} — {post_type}. Artwork by Thomas Guest."
+    description = build_pin_description(post_title, media, size, body_md, etsy_listing_id or None)
     link = f"{SITE_URL}/posts/{slug}"
 
     # collect images: hero is <slug>.jpg; additional images from markdown
@@ -277,7 +378,8 @@ def main(argv: list[str]) -> int:
         payload = {
             "board_id": board_id,
             "title": title,
-            "alt_text": description,
+            "description": description,
+            "alt_text": f"{post_title}. {('This artwork is available for sale on Etsy.' if etsy_listing_id else 'This artwork is for sale.')}",
             "link": link,
             "media_source": {"source_type": "image_url", "url": media_url},
         }
@@ -288,7 +390,8 @@ def main(argv: list[str]) -> int:
         payload = {
             "board_id": board_id,
             "title": title,
-            "alt_text": description,
+            "description": description,
+            "alt_text": f"{post_title}. {('This artwork is available for sale on Etsy.' if etsy_listing_id else 'This artwork is for sale.')}",
             "link": link,
             "media_source": {"source_type": "multiple_image_urls", "items": items},
         }
