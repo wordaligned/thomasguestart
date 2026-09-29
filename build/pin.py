@@ -17,6 +17,7 @@ Behaviour:
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from html.parser import HTMLParser
@@ -40,6 +41,8 @@ API_URL = "https://api.pinterest.com/v5/pins"
 SANDBOX_API_URL = "https://api-sandbox.pinterest.com/v5/pins"
 SITE_URL = "https://thomasguest.art"
 SITE_NAME = "thomasguest.art"
+MAX_PIN_DESCRIPTION_CHARS = 799
+MAX_PIN_IMAGES = 5
 
 SEPARATOR_RE = re.compile(r"^-{5,}\s*$", re.MULTILINE)
 INLINE_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\(/images/([^)]+)\)")
@@ -188,6 +191,16 @@ def plain_text_from_markdown(markdown_text: str) -> str:
     return text.strip()
 
 
+def truncate_pin_description(description: str, limit: int = MAX_PIN_DESCRIPTION_CHARS) -> str:
+    if len(description) <= limit:
+        return description.rstrip()
+    truncated = description[: max(0, limit - 1)].rstrip()
+    if not truncated:
+        return description[:limit]
+    truncated = truncated.rsplit(" ", 1)[0] if " " in truncated else truncated
+    return f"{truncated.strip()}…"
+
+
 def build_pin_description(post_title: str, media: List[str], size: str, body_md: str, etsy_listing_id: Optional[str] = None) -> str:
     media_text = ", ".join(media) if media else "Unknown"
     size_text = size.strip() if size else "Unknown"
@@ -205,7 +218,7 @@ def build_pin_description(post_title: str, media: List[str], size: str, body_md:
     if body_text:
         description_parts.append("")
         description_parts.append(body_text)
-    return "\n\n".join(description_parts)
+    return truncate_pin_description("\n\n".join(description_parts))
 
 
 def list_pins(access_token: str, limit: int = 25) -> List[Dict[str, Any]]:
@@ -235,26 +248,40 @@ def list_pins(access_token: str, limit: int = 25) -> List[Dict[str, Any]]:
     return []
 
 
+def has_existing_pin(access_token: str, link: str) -> Optional[Dict[str, Any]]:
+    normalized_link = link.strip().rstrip("/").lower()
+    try:
+        pins = list_pins(access_token, limit=250)
+    except Exception:
+        log.exception("Checking existing Pinterest pins failed")
+        raise
+
+    for pin in pins:
+        candidate = (pin.get("link") or pin.get("url") or "").strip().rstrip("/").lower()
+        if candidate and candidate == normalized_link:
+            return pin
+    return None
+
+
 def main(argv: list[str]) -> int:
-    # support optional --sandbox, --dry-run, and --list flags
-    sandbox = False
-    dry_run = False
-    list_mode = False
-    args = list(argv[1:])
-    if "--sandbox" in args:
-        sandbox = True
-        args.remove("--sandbox")
-    if "--dry-run" in args:
-        dry_run = True
-        args.remove("--dry-run")
-    if "--list" in args:
-        list_mode = True
-        args.remove("--list")
+    parser = argparse.ArgumentParser(
+        description="Create a Pinterest pin from a built post source.",
+        epilog="Examples:\n  python pin.py build/posts/alan\n  python pin.py --dry-run --sandbox build/posts/alan\n  python pin.py --list",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("post_path", nargs="?", help="path to a post source under build/posts or a slug")
+    parser.add_argument("--sandbox", action="store_true", help="use the Pinterest sandbox API")
+    parser.add_argument("--dry-run", action="store_true", help="print the payload without creating the pin")
+    parser.add_argument("--list", action="store_true", help="list existing pins for the configured account")
+    args = parser.parse_args(argv[1:])
+
+    sandbox = args.sandbox
+    dry_run = args.dry_run
+    list_mode = args.list
 
     if list_mode:
-        if len(args) > 1:
-            print("Usage: python pin.py [--sandbox] --list\nExample: python pin.py --list")
-            return 2
+        if args.post_path:
+            parser.error("--list does not accept a post path")
 
         try:
             cfg = read_config(Path(CONFIG_FILE))
@@ -293,11 +320,10 @@ def main(argv: list[str]) -> int:
                 print(f"   link: {link}")
         return 0
 
-    if len(args) != 1:
-        print("Usage: python pin.py [--sandbox] [--dry-run] <path-to-build-post>\nExample: python pin.py --dry-run build/posts/alan")
-        return 2
+    if not args.post_path:
+        parser.error("a post path is required unless --list is used")
 
-    src = Path(args[0])
+    src = Path(args.post_path)
     # derive slug and source path under build/posts
     slug = src.stem
     source_path = src if src.is_absolute() and src.exists() else BUILD_DIR / "posts" / slug
@@ -368,9 +394,26 @@ def main(argv: list[str]) -> int:
         else:
             images.append((alt or post_title, filename))
 
+    deduped_images: List[Tuple[str, str]] = []
+    seen_filenames = set()
+    for alt, filename in images:
+        if filename in seen_filenames:
+            continue
+        seen_filenames.add(filename)
+        deduped_images.append((alt, filename))
+    images = deduped_images[:MAX_PIN_IMAGES]
+
+    if len(deduped_images) > MAX_PIN_IMAGES:
+        print(f"Limiting pin to the first {MAX_PIN_IMAGES} images for {slug}.")
+
     if not images:
         print("No images found for post; cannot create pin.")
         return 8
+
+    existing_pin = has_existing_pin(access_token, link)
+    if existing_pin:
+        print(f"Pin already exists for {link} (id: {existing_pin.get('id')}); skipping creation.")
+        return 0
 
     # build media_source
     if len(images) == 1:

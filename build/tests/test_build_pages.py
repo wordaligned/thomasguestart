@@ -257,6 +257,49 @@ class BuildPagesTests(unittest.TestCase):
         self.assertIn("This is the body text.", description)
         self.assertIn("It has two paragraphs.", description)
 
+    def test_build_pin_description_truncates_to_under_800_chars(self) -> None:
+        description = pin_script.build_pin_description(
+            "Example",
+            ["Linocut"],
+            "10x10",
+            "A " * 500,
+            None,
+        )
+
+        self.assertLess(len(description), 800)
+
+    def test_main_skips_creating_existing_pin_by_link(self) -> None:
+        source_path = ROOT / "build" / "posts" / "alan"
+
+        with patch.object(pin_script, "read_config", return_value={"access_token": "secret", "board_id": "board-123"}), \
+             patch.object(pin_script, "list_pins", return_value=[{"id": "pin-123", "link": "https://thomasguest.art/posts/alan"}]), \
+             patch.object(pin_script, "parse_post_source", return_value=(
+                 {"title": "Alan", "type": "Print", "media": "Linocut", "size": "10x10", "tags": "print"},
+                 "Body text",
+             )), \
+             patch.object(pin_script, "create_pin") as create_pin:
+            rc = pin_script.main(["pin.py", str(source_path)])
+
+        self.assertEqual(rc, 0)
+        create_pin.assert_not_called()
+
+    def test_main_limits_images_to_five(self) -> None:
+        source_path = ROOT / "build" / "posts" / "alan"
+
+        markdown = "\n".join(f"![img {i}](/images/alan-{i}.jpg)" for i in range(8))
+
+        with patch.object(pin_script, "read_config", return_value={"access_token": "secret", "board_id": "board-123"}), \
+             patch.object(pin_script, "list_pins", return_value=[]), \
+             patch.object(pin_script, "parse_post_source", return_value=(
+                 {"title": "Alan", "type": "Print", "media": "Linocut", "size": "10x10", "tags": "print"},
+                 markdown,
+             )), \
+             patch.object(pin_script, "create_pin", return_value={"id": "pin-created"}) as create_pin:
+            rc = pin_script.main(["pin.py", str(source_path)])
+
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(create_pin.call_args[0][0]["media_source"]["items"]), 5)
+
     def test_parse_post_embeds_youtube_short_links_in_html(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             path = Path(tmp_dir) / "youtube-post"
