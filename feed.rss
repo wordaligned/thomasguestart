@@ -5,7 +5,7 @@
 <link>https://thomasguest.art</link>
 <description>Selected artwork by Thomas Guest.</description>
 <language>en-gb</language>
-<lastBuildDate>Tue, 29 Sep 2026 08:36:20 +0000</lastBuildDate>
+<lastBuildDate>Mon, 02 Nov 2026 10:28:32 +0000</lastBuildDate>
 <item>
 <title>Archeopteryx Tile</title>
 <link>https://thomasguest.art/posts/archeopteryx-tile</link>
@@ -201,6 +201,19 @@ I carved it using my printmaking tools.</p>
 <p><picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/king-vulture-tile-1-mobile.jpg"><img alt="king vulture tile" src="https://thomasguest.art/images/king-vulture-tile-1.jpg"></picture>
 <picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/king-vulture-tile-2-mobile.jpg"><img alt="king vulture tile" src="https://thomasguest.art/images/king-vulture-tile-2.jpg"></picture></p>]]></description>
 <category>inlay decoration</category>
+</item>
+<item>
+<title>Komodo Woodcut</title>
+<link>https://thomasguest.art/posts/komodo</link>
+<guid isPermaLink="true">https://thomasguest.art/posts/komodo</guid>
+<description><![CDATA[<p><img src="https://thomasguest.art/images/komodo.jpg" alt="Komodo Woodcut"></p><p>This was carved from shina plywood and printed by hand on kitakata and Wenzhou paper, using black and burnt umber ink.</p>
+<p>The inspiration comes from the <a href="https://www.bbc.co.uk/iplayer/episode/b00nj6dr/life-series-1-2-reptiles-and-amphibians">Reptiles episode of the BBC Life nature documentary</a> series, which includes footage of komodo dragons hunting a water buffalo.</p>
+<p>I tested out and transferred the design using a papercut.</p>
+<p><picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/komodo-1-mobile.jpg"><img alt="komodo" src="https://thomasguest.art/images/komodo-1.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/komodo-2-mobile.jpg"><img alt="komodo" src="https://thomasguest.art/images/komodo-2.jpg"></picture>
+<picture><source media="(max-width: 768px)" srcset="https://thomasguest.art/images/komodo-3-mobile.jpg"><img alt="komodo" src="https://thomasguest.art/images/komodo-3.jpg"></picture></p>
+<p><video controls preload="metadata" class="post-video"><source src="/videos/komodo.mp4" type="video/mp4">Your browser does not support HTML5 video.</video></p>]]></description>
+<category>relief print</category>
 </item>
 <item>
 <title>Oxwich Eels x 2</title>
